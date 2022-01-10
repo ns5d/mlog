@@ -1,62 +1,57 @@
 package mlog
 
 import (
-	"errors"
 	"os"
 	"testing"
 )
 
-func TestTrace(t *testing.T) {
-	Start(LevelTrace, "")
+func TestDebug(t *testing.T) {
+	Start("Debug", "")
 
-	Trace("trace log")
+	Debug("Debug log")
 	Info("info log")
 	Warning("warning log")
 
-	err := errors.New("error log")
-	Error(err)
+	Error("error log")
 
 	// Fatalf("fatalf log")
 	Stop()
 }
 
 func TestInfo(t *testing.T) {
-	Start(LevelInfo, "")
+	Start("Info", "")
 
-	Trace("trace log")
+	Debug("Debug log")
 	Info("info log")
 	Warning("warning log")
 
-	err := errors.New("error log")
-	Error(err)
+	Error("error log")
 
 	// Fatalf("fatalf log")
 	Stop()
 }
 
 func TestWarning(t *testing.T) {
-	Start(LevelWarn, "")
+	Start("Warn", "")
 
-	Trace("trace log")
+	Debug("Debug log")
 	Info("info log")
 	Warning("warning log")
 
-	err := errors.New("error log")
-	Error(err)
+	Error("error log")
 
 	// Fatalf("fatalf log")
 	Stop()
 }
 
 func TestError(t *testing.T) {
-	Start(LevelError, "")
+	Start("Error", "")
 
-	Trace("trace log")
+	Debug("Debug log")
 	Info("info log")
 	Warning("warning log")
 
-	err := errors.New("error log")
-	Error(err)
+	Error("error log")
 
 	// Fatalf("fatalf log")
 	Stop()
@@ -69,7 +64,7 @@ func TestStartEx(t *testing.T) {
 	os.Mkdir(path, 0777)
 	fileName := path + "/startex"
 
-	StartEx(LevelInfo, fileName, 10, 2)
+	StartEx("Info", fileName, 10, 2)
 
 	Info("Test 1")
 	Info("Test 2")

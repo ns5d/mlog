@@ -16,8 +16,8 @@ import (
 type LogLevel int32
 
 const (
-	// LevelTrace logs everything
-	LevelTrace LogLevel = (1 << iota)
+	// LevelDebug logs everything
+	LevelDebug LogLevel = (1 << iota)
 
 	// LevelInfo logs Info, Warnings and Errors
 	LevelInfo
@@ -35,7 +35,7 @@ const BackupCount int = 10
 type mlog struct {
 	LogLevel int32
 
-	Trace   *log.Logger
+	Debug   *log.Logger
 	Info    *log.Logger
 	Warning *log.Logger
 	Error   *log.Logger
@@ -129,13 +129,30 @@ func (h *RotatingFileHandler) doRollover() {
 	}
 }
 
-// Start starts the logging
-func Start(level LogLevel, path string) {
-	doLogging(level, path, MaxBytes, BackupCount)
+func getLogLevel(level string) LogLevel {
+	if level == "Info" {
+		return LevelInfo
+	}
+
+	if level == "Warning" {
+		return LevelWarn
+	}
+
+	if level == "Error" {
+		return LevelError
+	}
+
+	return LevelDebug
 }
 
-func StartEx(level LogLevel, path string, maxBytes, backupCount int) {
-	doLogging(level, path, maxBytes, backupCount)
+// Start starts the logging
+func Start(level string, path string) {
+	doLogging(getLogLevel(level), path, MaxBytes, BackupCount)
+}
+
+// StartEx starts the logging
+func StartEx(level string, path string, maxBytes, backupCount int) {
+	doLogging(getLogLevel(level), path, maxBytes, backupCount)
 }
 
 // Stop stops the logging
@@ -157,7 +174,7 @@ func Sync() {
 }
 
 func doLogging(logLevel LogLevel, fileName string, maxBytes, backupCount int) {
-	traceHandle := ioutil.Discard
+	debugHandle := ioutil.Discard
 	infoHandle := ioutil.Discard
 	warnHandle := ioutil.Discard
 	errorHandle := ioutil.Discard
@@ -166,8 +183,8 @@ func doLogging(logLevel LogLevel, fileName string, maxBytes, backupCount int) {
 	var fileHandle *RotatingFileHandler
 
 	switch logLevel {
-	case LevelTrace:
-		traceHandle = os.Stdout
+	case LevelDebug:
+		debugHandle = os.Stdout
 		fallthrough
 	case LevelInfo:
 		infoHandle = os.Stdout
@@ -182,13 +199,15 @@ func doLogging(logLevel LogLevel, fileName string, maxBytes, backupCount int) {
 
 	if fileName != "" {
 		var err error
+
 		fileHandle, err = NewRotatingFileHandler(fileName, maxBytes, backupCount)
+
 		if err != nil {
 			log.Fatal("mlog: unable to create RotatingFileHandler: ", err)
 		}
 
-		if traceHandle == os.Stdout {
-			traceHandle = io.MultiWriter(fileHandle, traceHandle)
+		if debugHandle == os.Stdout {
+			debugHandle = io.MultiWriter(fileHandle, debugHandle)
 		}
 
 		if infoHandle == os.Stdout {
@@ -209,7 +228,7 @@ func doLogging(logLevel LogLevel, fileName string, maxBytes, backupCount int) {
 	}
 
 	Logger = mlog{
-		Trace:   log.New(traceHandle, "T: ", DefaultFlags),
+		Debug:   log.New(debugHandle, "D: ", DefaultFlags),
 		Info:    log.New(infoHandle, "I: ", DefaultFlags),
 		Warning: log.New(warnHandle, "W: ", DefaultFlags),
 		Error:   log.New(errorHandle, "E: ", DefaultFlags),
@@ -220,11 +239,11 @@ func doLogging(logLevel LogLevel, fileName string, maxBytes, backupCount int) {
 	atomic.StoreInt32(&Logger.LogLevel, int32(logLevel))
 }
 
-//** TRACE
+//** DEBUG
 
-// Trace writes to the Trace destination
-func Trace(format string, a ...interface{}) {
-	Logger.Trace.Output(2, fmt.Sprintf(format, a...))
+// Debug writes to the Debug destination
+func Debug(format string, a ...interface{}) {
+	Logger.Debug.Output(2, fmt.Sprintf(format, a...))
 }
 
 //** INFO
@@ -244,8 +263,8 @@ func Warning(format string, a ...interface{}) {
 //** ERROR
 
 // Error writes to the Error destination and accepts an err
-func Error(err error) {
-	Logger.Error.Output(2, fmt.Sprintf("%s\n", err))
+func Error(format string, a ...interface{}) {
+	Logger.Error.Output(2, fmt.Sprintf(format, a...))
 }
 
 // IfError is a shortcut function for log.Error if error
